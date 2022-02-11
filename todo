@@ -1,0 +1,30 @@
+project todo/docs
+
+the client is the configuration on connection to the service.
+splits into senders and consumers
+senders sends to queues
+consumers consume from queues
+
+client configuration:
+    sender/consumer
+    queue - queue configuration
+
+if a queue does not exists it creates it.
+queue name must be uniq.
+
+queue configuration:
+
+on connection the server reds until new line - this will be the client configuration
+
+how will the server be reading the data:
+implement a protocol for example -
+first byte is if its sender(00000000) or consumer(00000001)
+the second byte is the length of the queue name max size (255)(uint)
+then the name of the queue (array of bytes with the - name)
+
+then the reader will start with reading the first byte to know what type of client it is
+then the read the second byte to know how long the name is
+then create a reader with the size of the queue name from before and then finish
+
+when a consumer connects it should be added to the queue as a listener.
+we could do a list or maybe a map on the queue struct.
