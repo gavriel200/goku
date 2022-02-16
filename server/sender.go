@@ -1,6 +1,9 @@
 package server
 
-import "net"
+import (
+	"fmt"
+	"net"
+)
 
 type sender struct {
 	conn net.Conn
@@ -12,9 +15,14 @@ func newSender(conn net.Conn, ch chan []byte) *sender {
 }
 
 func (s *sender) listen() {
+	defer s.conn.Close()
 	for {
 		data := make([]byte, 1)
-		s.conn.Read(data)
+		_, err := s.conn.Read(data)
+		if err != nil {
+			fmt.Println(err, "connection closed")
+			break
+		}
 		s.ch <- data
 	}
 }

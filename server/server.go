@@ -14,7 +14,7 @@ type Server struct {
 	queues map[string]*queue
 }
 
-func NewServer(Name string) *Server {
+func NewServer() *Server {
 	return &Server{map[string]*queue{}}
 }
 
@@ -58,8 +58,8 @@ func (s *Server) Start() {
 		fmt.Println(s.queues)
 
 		if Ctype[0] == CONSUMER {
-			c := newConsumer(conn)
-			s.queues[string(QName)].consumers = append(s.queues[string(QName)].consumers, c)
+			consumer := newConsumer(conn)
+			s.queues[string(QName)].consumers = append(s.queues[string(QName)].consumers, consumer)
 		} else if Ctype[0] == SENDER {
 			ch := s.queues[string(QName)].ch
 			s := newSender(conn, ch)
