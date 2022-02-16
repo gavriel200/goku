@@ -23,6 +23,7 @@ func (s *sender) listen() {
 			fmt.Println(err, "connection closed")
 			break
 		}
+		fmt.Println("received: ", data)
 		s.ch <- data
 	}
 }

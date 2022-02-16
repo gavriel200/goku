@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	CONSUMER = iota
+	CONSUMER uint8 = iota
 	SENDER
 )
 
@@ -21,50 +21,48 @@ func NewServer() *Server {
 func (s *Server) Start() {
 	listener, err := net.Listen("tcp", ":8888")
 	if err != nil {
-		fmt.Printf("unable to start server: %s", err.Error())
+		fmt.Println("unable to start server: ", err)
 		return
 	}
 	fmt.Println("starting server on port 8888")
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			fmt.Printf("failed to accept connection: %s", err.Error())
+			fmt.Println("failed to accept connection: ", err)
 			continue
 		}
 		fmt.Println("new connection")
+		go s.handleNewConnection(conn)
+	}
+}
 
-		Ctype := make([]byte, 1)
-		conn.Read(Ctype)
-		Qsize := make([]byte, 1)
-		conn.Read(Qsize)
-		if Qsize[0] == byte(0) {
-			fmt.Println("bad queue name size")
-			conn.Close()
-		}
-		QName := make([]byte, uint8(Qsize[0]))
-		conn.Read(QName)
-		fmt.Println(Ctype)
-		fmt.Println(Qsize)
-		fmt.Println(QName)
-		fmt.Println(string(QName))
+func (s *Server) handleNewConnection(conn net.Conn) {
+	connData := make([]byte, 2)
+	conn.Read(connData)
 
-		// when receiving a connection, checking if its calling a existing queue and creates if needed
-		_, ok := s.queues[string(QName)]
-		fmt.Println(ok)
-		if !ok {
-			s.queues[string(QName)] = newQueue()
-			go s.queues[string(QName)].start()
-		}
-		fmt.Println(s.queues)
+	connType := connData[0]
+	queueSize := connData[1]
+	if queueSize == byte(0) {
+		fmt.Println("bad queue name size")
+		conn.Close()
+	}
+	queueNameBytes := make([]byte, uint8(queueSize))
+	conn.Read(queueNameBytes)
+	queueName := string(queueNameBytes)
 
-		if Ctype[0] == CONSUMER {
-			consumer := newConsumer(conn)
-			s.queues[string(QName)].consumers = append(s.queues[string(QName)].consumers, consumer)
-		} else if Ctype[0] == SENDER {
-			ch := s.queues[string(QName)].ch
-			s := newSender(conn, ch)
-			go s.listen()
+	// check if queue already exists
+	_, ok := s.queues[queueName]
+	if !ok {
+		s.queues[queueName] = newQueue()
+		go s.queues[queueName].start()
+	}
 
-		}
+	if connType == CONSUMER {
+		consumer := newConsumer(conn)
+		s.queues[queueName].consumers = append(s.queues[queueName].consumers, consumer)
+	} else if connType == SENDER {
+		ch := s.queues[queueName].ch
+		s := newSender(conn, ch)
+		go s.listen()
 	}
 }

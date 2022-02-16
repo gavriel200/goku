@@ -11,21 +11,27 @@ type queue struct {
 func newQueue() *queue {
 	return &queue{
 		ch:        make(chan []byte),
-		buffer:    [][]byte{},    // make([][]byte, 10),
-		consumers: []*consumer{}, // make([]*consumer, 0),
+		buffer:    [][]byte{},
+		consumers: []*consumer{},
 	}
 }
 
 func (q *queue) start() {
-	fmt.Println("started consuming on queue")
 	for data := range q.ch {
-		fmt.Println(data)
-		fmt.Println(q.consumers)
-		err := q.consumers[0].sendMessage(data)
-		if err != nil {
-			fmt.Println("consumer disconected")
-			q.consumers[0].conn.Close()
-			q.consumers = []*consumer{}
+		for index, consumer := range q.consumers {
+			if consumer.available {
+				err := consumer.sendMessage(data)
+				if err != nil {
+					fmt.Println("consumer disconected")
+					consumer.conn.Close()
+					q.consumers = append(q.consumers[:index], q.consumers[index+1:]...)
+					continue
+				} else {
+					break
+				}
+			}
 		}
+		fmt.Println(q.consumers)
+		// handel no available consumer / no consumers
 	}
 }

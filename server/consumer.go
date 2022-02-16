@@ -5,19 +5,28 @@ import (
 	"net"
 )
 
+const ping byte = 0xFF
+
 type consumer struct {
-	conn net.Conn
+	conn      net.Conn
+	available bool
 }
 
 func newConsumer(conn net.Conn) *consumer {
-	return &consumer{conn}
+	available := true
+	return &consumer{conn, available}
 }
 
 func (c *consumer) sendMessage(data []byte) error {
-	val, err := c.conn.Write(data) // when consumer disconects error accurs only after second message
-	fmt.Println(val)
-	if err != nil {
-		return err
+	// using ping because the write returns an error on the second Write since the disconnect
+	_, pingError := c.conn.Write([]byte{ping})
+	if pingError != nil {
+		return pingError
 	}
+	_, conError := c.conn.Write(data)
+	if conError != nil {
+		return conError
+	}
+	fmt.Println("sent: ", data)
 	return nil
 }
