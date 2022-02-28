@@ -31,7 +31,6 @@ func (s *Server) Start() {
 			fmt.Println("failed to accept connection: ", err)
 			continue
 		}
-		fmt.Println("new connection")
 		go s.handleNewConnection(conn)
 	}
 }
@@ -54,13 +53,14 @@ func (s *Server) handleNewConnection(conn net.Conn) {
 	_, ok := s.queues[queueName]
 	if !ok {
 		s.queues[queueName] = newQueue()
-		go s.queues[queueName].start()
+		s.queues[queueName].start()
 	}
 
 	if connType == CONSUMER {
-		consumer := newConsumer(conn)
-		s.queues[queueName].consumers = append(s.queues[queueName].consumers, consumer)
+		fmt.Println("new connection CONSUMER")
+		s.queues[queueName].addConsumer(newConsumer(conn))
 	} else if connType == SENDER {
+		fmt.Println("new connection SENDER")
 		ch := s.queues[queueName].ch
 		s := newSender(conn, ch)
 		go s.listen()

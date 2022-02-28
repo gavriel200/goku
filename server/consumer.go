@@ -19,10 +19,7 @@ func newConsumer(conn net.Conn) *consumer {
 
 func (c *consumer) sendMessage(data []byte) error {
 	// using ping because the write returns an error on the second Write since the disconnect
-	_, pingError := c.conn.Write([]byte{ping})
-	if pingError != nil {
-		return pingError
-	}
+	c.conn.Write([]byte{ping})
 	_, conError := c.conn.Write(data)
 	if conError != nil {
 		return conError

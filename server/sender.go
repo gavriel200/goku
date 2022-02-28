@@ -20,7 +20,7 @@ func (s *sender) listen() {
 		data := make([]byte, 1)
 		_, err := s.conn.Read(data)
 		if err != nil {
-			fmt.Println(err, "connection closed")
+			fmt.Println("sender disconected")
 			break
 		}
 		fmt.Println("received: ", data)
